@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0b0820" />
+<title>MINSA.EXE — A Little Universe Made for You</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+:root{--midnight:#0b0820;--plum:#2a1458;--orchid:#b86bff;--rose:#ff8fc7;--moon:#f6e9ff;--mist:#bfaee6;
+--serif:'Fraunces',Georgia,'Times New Roman',serif;--sans:'Manrope',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--midnight);color:var(--moon);font-family:var(--sans);font-size:18px;line-height:1.6;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--rose);outline-offset:4px;border-radius:12px}
+.app{position:relative;min-height:100%;overflow-x:hidden;background:radial-gradient(120% 90% at 50% 0%,#1b1050 0%,var(--midnight) 70%)}
+.nebula{position:fixed;inset:-10%;pointer-events:none;background:radial-gradient(40% 35% at 20% 25%,rgba(255,143,199,.28),transparent 70%),radial-gradient(45% 40% at 80% 70%,rgba(150,90,255,.3),transparent 70%),radial-gradient(30% 30% at 60% 15%,rgba(110,150,255,.18),transparent 70%);animation:drift 40s ease-in-out infinite alternate}
+#sky-canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+.topbar{position:fixed;top:0;left:0;right:0;z-index:5;display:flex;justify-content:space-between;align-items:center;padding:14px 16px}
+.progress{display:flex;gap:10px}
+.dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.2);transition:.4s}
+.dot.done{background:var(--orchid)}
+.dot.now{background:var(--rose);box-shadow:0 0 12px var(--rose);transform:scale(1.3)}
+.music{display:flex;align-items:center;gap:8px}
+.music input{width:84px;accent-color:var(--rose)}
+.icon-btn{width:48px;height:48px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);display:grid;place-items:center}
+.icon-btn[aria-pressed=true]{border-color:var(--rose);box-shadow:0 0 16px rgba(255,143,199,.5)}
+.icon-btn:disabled{opacity:.4;cursor:not-allowed}
+.icon-btn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.scene{position:relative;z-index:2;min-height:100vh;min-height:100dvh;display:flex;animation:sceneIn 1s ease both}
+.center{margin:auto;width:min(100%,640px);padding:84px 20px 40px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px}
+.display{font-family:var(--serif);font-weight:600;font-size:clamp(2.6rem,11vw,4.6rem);line-height:1.05;margin:0;letter-spacing:-.01em;text-shadow:0 0 40px rgba(255,143,199,.45)}
+.title{font-family:var(--serif);font-weight:400;font-size:clamp(1.5rem,6vw,2.1rem);line-height:1.25;margin:0}
+.lede{font-family:var(--serif);font-style:italic;font-size:clamp(1.1rem,4.4vw,1.35rem);color:var(--mist);max-width:30em;margin:0}
+.lede.small{font-size:1.05rem}
+.tiny,.count{font-size:.9rem;color:var(--mist);margin:0}
+.btn{min-height:52px;padding:14px 30px;border-radius:999px;border:1px solid rgba(255,255,255,.35);font-weight:700;letter-spacing:.08em;font-size:.95rem;background:linear-gradient(135deg,var(--orchid),var(--rose));color:#1a0b36;box-shadow:0 0 28px rgba(255,143,199,.4);transition:transform .25s,box-shadow .25s}
+.btn:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 0 44px rgba(255,143,199,.65)}
+.btn:active{transform:scale(.98)}
+.btn.ghost{background:transparent;color:var(--moon);box-shadow:none;letter-spacing:.02em;font-weight:600}
+.btn.ghost:hover{background:rgba(255,255,255,.08)}
+.orb{width:150px;height:150px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#fff 0%,#ffc4e6 18%,#b86bff 55%,#3a1b7a 100%);box-shadow:0 0 60px 10px rgba(255,143,199,.5),0 0 140px 40px rgba(150,90,255,.35);animation:float 6s ease-in-out infinite,pulse 4s ease-in-out infinite}
+.orb span{font-family:var(--serif);font-style:italic;font-size:5.2rem;line-height:1;color:var(--plum);margin-top:-8px}
+.sky{position:relative;width:100%;height:min(52vh,380px);border-radius:28px;border:1px solid rgba(255,255,255,.15);background:rgba(20,10,60,.45);overflow:hidden}
+.lines{position:absolute;inset:0;width:100%;height:100%}
+.lines line{stroke:rgba(255,143,199,.7);stroke-width:1.5;stroke-dasharray:100;animation:draw .8s ease both;vector-effect:non-scaling-stroke}
+.star{position:absolute;width:64px;height:64px;margin:-32px 0 0 -32px;background:none;border:0;padding:0;display:grid;place-items:center}
+.star .core{width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 0 18px 6px var(--rose);animation:pulse 2.4s ease-in-out infinite;transition:transform .2s}
+.star:hover .core{transform:scale(1.4)}
+.star .ring{position:absolute;width:18px;height:18px;border-radius:50%;border:2px solid var(--rose);opacity:0}
+.star.got .core{background:#ffe28a;box-shadow:0 0 26px 10px #ffd36e;animation:none}
+.star.got .ring{animation:ring .9s ease-out}
+.star:disabled{cursor:default}
+.bar{width:min(100%,320px);height:6px;border-radius:6px;background:rgba(255,255,255,.15);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--orchid),var(--rose));transition:width .5s}
+.quiz{width:100%;display:flex;flex-direction:column;align-items:center;gap:18px}
+.answers{width:100%;display:grid;gap:12px}
+.answer{min-height:56px;padding:12px 18px;border-radius:18px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.07);text-align:left;transition:.25s}
+.answer:hover:not(:disabled){border-color:var(--rose);background:rgba(255,143,199,.14);transform:translateX(4px)}
+.answer:disabled{opacity:.55;cursor:default}
+.answer.chosen{opacity:1;border-color:var(--rose);background:rgba(255,143,199,.2)}
+.reply{font-family:var(--serif);font-style:italic;color:var(--rose);min-height:3.2em;margin:0}
+.envelope{position:relative;width:min(78vw,300px);aspect-ratio:3/2;border:0;border-radius:10px;background:linear-gradient(160deg,#f3d9ff,#d8b4f5);box-shadow:0 0 50px rgba(184,107,255,.5);animation:float 5s ease-in-out infinite;padding:0;transition:transform .3s}
+.flap{position:absolute;inset:0 0 auto 0;height:58%;background:linear-gradient(#e8c6fb,#cfa3ee);clip-path:polygon(0 0,100% 0,50% 100%);border-radius:10px 10px 0 0}
+.seal{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-size:1.7rem;color:#fff;background:radial-gradient(circle at 35% 30%,#ffb3d9,#e0306f);box-shadow:0 0 24px 6px rgba(255,80,150,.65);animation:pulse 2.2s ease-in-out infinite}
+.envelope:hover{transform:scale(1.04) rotate(-1deg)}
+.paper{width:100%;text-align:left;padding:30px 26px;border-radius:6px;color:#3a2547;font-family:var(--serif);font-size:1.12rem;line-height:1.75;background:repeating-linear-gradient(transparent 0 33px,rgba(150,110,170,.12) 33px 34px),linear-gradient(#fffaf4,#f6ead9);box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 40px rgba(255,143,199,.25);border-left:4px double rgba(224,48,111,.4);max-height:62vh;overflow-y:auto}
+.paper p{margin:0 0 .9em}
+.greet{font-size:1.4rem;font-style:italic}
+.signoff{font-style:italic;margin-top:1.2em}
+.signoff span{font-size:1.3rem;font-weight:600}
+.cakewrap{position:relative;width:min(72vw,270px)}
+.cake{width:100%;height:auto;filter:drop-shadow(0 0 28px rgba(255,143,199,.35))}
+.flame{opacity:0;transform-box:fill-box;transform-origin:50% 100%}
+.lit .flame{opacity:1;filter:drop-shadow(0 0 8px #ffb347);animation:flicker .5s ease-in-out infinite alternate}
+.burst{position:absolute;left:50%;top:30%;pointer-events:none}
+.bit{position:absolute;width:9px;height:14px;border-radius:2px;opacity:0;animation:confetti 2.4s cubic-bezier(.2,.7,.3,1) forwards}
+.bit.round{width:8px;height:8px;border-radius:50%}
+.sent{font-weight:700;letter-spacing:.14em;color:var(--rose);margin:0 0 8px;text-shadow:0 0 20px rgba(255,143,199,.7)}
+.pop{animation:pop .5s ease both}
+.rise{animation:rise .9s ease both}
+.hidden{display:none!important}
+@keyframes sceneIn{from{opacity:0;filter:blur(8px)}to{opacity:1;filter:none}}
+@keyframes drift{to{transform:translate(3%,-3%) scale(1.08)}}
+@keyframes float{50%{transform:translateY(-12px)}}
+@keyframes pulse{50%{filter:brightness(1.25)}}
+@keyframes draw{from{stroke-dashoffset:100}to{stroke-dashoffset:0}}
+@keyframes ring{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(5)}}
+@keyframes flicker{to{transform:scale(1.12,.92) rotate(2deg)}}
+@keyframes pop{from{opacity:0;transform:scale(.94) translateY(8px)}to{opacity:1;transform:none}}
+@keyframes rise{from{opacity:0;transform:translateY(40px) rotate(-1deg)}to{opacity:1;transform:none}}
+@keyframes confetti{0%{opacity:1;transform:translate(0,0) rotate(0)}60%{opacity:1}100%{opacity:0;transform:translate(var(--x),calc(var(--y) + 380px)) rotate(var(--r))}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="nebula" aria-hidden="true"></div>
+  <canvas id="sky-canvas" aria-hidden="true"></canvas>
+  <header class="topbar">
+    <div class="progress" id="progress" role="img"></div>
+    <div class="music">
+      <button type="button" class="icon-btn" id="musicBtn" aria-pressed="false" aria-label="Turn music on"></button>
+      <input type="range" id="vol" class="hidden" min="0" max="1" step="0.05" value="0.5" aria-label="Volume" />
+    </div>
+  </header>
+  <main class="scene" id="scene"></main>
+</div>
+
+<script>
+/* ================= ✏️ EDIT ME: everything Minsa reads is in this block ================= */
+
+// Music: put an audio file you have the right to use next to this file and set its name here.
+// If the file is missing, the music button just greys out and everything else still works.
+const MUSIC_SRC = 'music.mp3';
+
+// QUIZ: replace with real inside jokes. Every answer needs a "reply" (no wrong answers!).
+const QUIZ = [
+  { question: "What's the secret ingredient in our friendship?", answers: [
+    { text: 'Endless snacks', reply: 'Correct, and legally binding. Snacks are a love language.' },
+    { text: 'Unfiltered honesty', reply: 'Brutal, brave, and exactly why this works.' },
+    { text: 'Chaotic good energy', reply: 'Pure chaos, but make it loyal. Perfect.' } ] },
+  { question: 'What should every best-friend day include?', answers: [
+    { text: 'Laughing until it hurts', reply: 'Best workout there is. Ten out of ten.' },
+    { text: 'A very long voice note', reply: 'Part one of seven. We both know it.' },
+    { text: 'Doing absolutely nothing, together', reply: 'The most underrated plan in history.' } ] },
+  { question: "What's one thing you deserve today and always?", answers: [
+    { text: 'All the cake', reply: 'Granted. The biggest slice is yours.' },
+    { text: 'Endless good news', reply: 'The universe has been notified.' },
+    { text: 'To be celebrated loudly', reply: "That's what the next two screens are for." } ] },
+];
+
+// LETTER: each string in "paragraphs" is one paragraph.
+const LETTER = {
+  greeting: 'Dear Minsa,',
+  paragraphs: [
+    'Happy birthday to one of my favourite humans. Life is a little brighter, funnier, and a whole lot more interesting with you in it.',
+    'Thank you for being the kind of friend who makes ordinary days feel like memories worth keeping.',
+    'I hope this new chapter brings you the kind of happiness that sneaks up on you, the courage to chase the things you dream about, and a hundred tiny reasons to smile.',
+    'Whatever the universe has planned, I hope you never forget how loved and appreciated you are. You deserve so many good things, Minsa — today and always.',
+  ],
+  signoff: 'Always cheering for you,',
+  signature: 'Your best friend',
+};
+
+// FINALE message shown after the wish
+const FINAL_WISH = 'May this year be gentle with you, generous to you, and full of everything you wished for. Happy birthday, Minsa.';
+
+/* ================= Everything below is the engine. You don't need to edit it. ================= */
+
+const $ = (s, r = document) => r.querySelector(s);
+const LABELS = ['Portal', 'Stars', 'Quiz', 'Letter', 'Finale'];
+let scene = 0;
+
+/* ---- Starfield ---- */
+(function () {
+  const canvas = $('#sky-canvas'), ctx = canvas.getContext('2d');
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let stars = [], w, h;
+  function draw(t) {
+    ctx.clearRect(0, 0, w, h);
+    for (const s of stars) {
+      const a = 0.35 + 0.65 * Math.abs(Math.sin(t / 1000 / s.s + s.p));
+      ctx.fillStyle = `rgba(${s.c},${still ? 0.7 : a})`;
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.28); ctx.fill();
+    }
+    if (!still) requestAnimationFrame(draw);
+  }
+  function resize() {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    w = innerWidth; h = innerHeight;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    stars = Array.from({ length: Math.round(w * h / 9000) }, () => ({
+      x: Math.random() * w, y: Math.random() * h, r: Math.random() * 1.4 + .3,
+      s: Math.random() * 2 + .5, p: Math.random() * 6.28,
+      c: Math.random() < .3 ? '255,170,220' : '235,225,255' }));
+    if (still) draw(0);
+  }
+  resize(); if (!still) requestAnimationFrame(draw);
+  addEventListener('resize', resize);
+})();
+
+/* ---- Music (only starts after a tap) ---- */
+const music = new Audio();
+music.loop = true; music.preload = 'none'; music.volume = 0.5;
+let musicMissing = false;
+const ICON_ON = '<svg viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>';
+const ICON_OFF = '<svg viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg>';
+const musicBtn = $('#musicBtn'), vol = $('#vol');
+function musicUI() {
+  const on = !music.paused && !musicMissing;
+  musicBtn.innerHTML = on ? ICON_ON : ICON_OFF;
+  musicBtn.setAttribute('aria-pressed', on);
+  musicBtn.disabled = musicMissing;
+  musicBtn.setAttribute('aria-label', musicMissing ? 'Music unavailable' : on ? 'Turn music off' : 'Turn music on');
+  musicBtn.title = musicMissing ? 'No music file added yet' : on ? 'Music on' : 'Music off';
+  vol.classList.toggle('hidden', !on);
+}
+async function playMusic() { try { await music.play(); } catch (e) {} musicUI(); }
+music.addEventListener('error', () => { musicMissing = true; musicUI(); });
+music.addEventListener('pause', musicUI);
+music.src = MUSIC_SRC;
+musicBtn.addEventListener('click', () => music.paused ? playMusic() : music.pause());
+vol.addEventListener('input', () => { music.volume = Number(vol.value); });
+musicUI();
+
+/* ---- Scenes ---- */
+function setProgress() {
+  const p = $('#progress');
+  p.setAttribute('aria-label', `Scene ${scene + 1} of 5: ${LABELS[scene]}`);
+  p.innerHTML = LABELS.map((_, i) => `<span class="dot ${i === scene ? 'now' : i < scene ? 'done' : ''}"></span>`).join('');
+}
+function go(n) {
+  scene = n; setProgress();
+  const old = document.getElementById('scene');
+  const fresh = old.cloneNode(false); // new node restarts the fade-in animation
+  fresh.innerHTML = '<section class="center"></section>';
+  old.replaceWith(fresh);
+  [portal, starGame, quiz, letter, finale][n]($('.center', fresh));
+  scrollTo(0, 0);
+}
+const next = () => go(Math.min(scene + 1, 4));
+
+function portal(el) {
+  el.innerHTML = `
+    <div class="orb" aria-hidden="true"><span>m</span></div>
+    <h1 class="display">Hey, Minsa.</h1>
+    <p class="lede">Somewhere in this enormous universe, there’s a little corner made just for you.</p>
+    <button type="button" class="btn" id="enter">ENTER YOUR UNIVERSE</button>
+    <p class="tiny">MINSA.EXE · a little universe made for you</p>`;
+  $('#enter', el).onclick = () => { playMusic(); next(); };
+}
+
+function starGame(el) {
+  const TOTAL = 5;
+  const POS = [[18, 24], [74, 16], [52, 46], [22, 72], [80, 68]]; // x%, y% — edit freely
+  const got = [];
+  el.innerHTML = `
+    <h2 class="title">Collect five stars</h2>
+    <p class="lede small" id="hint">Tap the glowing ones. They’ve been waiting for you.</p>
+    <div class="sky">
+      <svg class="lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+      ${POS.map((p, i) => `<button type="button" class="star" data-i="${i}" style="left:${p[0]}%;top:${p[1]}%" aria-label="Collect star ${i + 1}"><span class="core"></span><span class="ring"></span></button>`).join('')}
+    </div>
+    <p class="count" id="count" aria-live="polite">0 / ${TOTAL} collected</p>
+    <button type="button" class="btn ghost" id="skip">Skip</button>`;
+  const lines = $('.lines', el);
+  el.querySelectorAll('.star').forEach(b => b.onclick = () => {
+    const i = Number(b.dataset.i);
+    if (got.includes(i)) return;
+    if (got.length) {
+      const a = POS[got[got.length - 1]], c = POS[i];
+      lines.insertAdjacentHTML('beforeend', `<line x1="${a[0]}" y1="${a[1]}" x2="${c[0]}" y2="${c[1]}"/>`);
+    }
+    got.push(i);
+    b.classList.add('got'); b.disabled = true; b.setAttribute('aria-label', `Star ${i + 1} collected`);
+    $('#count', el).textContent = `${got.length} / ${TOTAL} collected`;
+    if (got.length === TOTAL) {
+      $('#hint', el).textContent = 'Constellation complete. Opening the next sky…';
+      setTimeout(() => { if (scene === 1) next(); }, 1400);
+    }
+  });
+  $('#skip', el).onclick = next;
+}
+
+function quiz(el) {
+  let i = 0;
+  function show() {
+    const q = QUIZ[i], last = i === QUIZ.length - 1;
+    el.innerHTML = `
+      <p class="count">Question ${i + 1} of ${QUIZ.length}</p>
+      <div class="bar"><i id="fill"></i></div>
+      <div class="quiz pop">
+        <h2 class="title"></h2>
+        <div class="answers"></div>
+        <p class="reply" aria-live="polite">&nbsp;</p>
+        <button type="button" class="btn pop hidden" id="nextQ">${last ? 'OPEN YOUR LETTER' : 'NEXT QUESTION'}</button>
+      </div>
+      <button type="button" class="btn ghost" id="skipQ">Skip quiz</button>`;
+    $('.title', el).textContent = q.question;
+    requestAnimationFrame(() => { $('#fill', el).style.width = `${i / QUIZ.length * 100}%`; });
+    const box = $('.answers', el);
+    q.answers.forEach(a => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'answer'; b.textContent = a.text;
+      b.onclick = () => {
+        box.querySelectorAll('.answer').forEach(x => x.disabled = true);
+        b.classList.add('chosen');
+        $('.reply', el).textContent = a.reply;
+        $('#fill', el).style.width = `${(i + 1) / QUIZ.length * 100}%`;
+        $('#nextQ', el).classList.remove('hidden');
+      };
+      box.appendChild(b);
+    });
+    $('#nextQ', el).onclick = () => { if (last) next(); else { i++; show(); } };
+    $('#skipQ', el).onclick = next;
+  }
+  show();
+}
+
+function letter(el) {
+  el.innerHTML = `
+    <button type="button" class="envelope" id="env" aria-label="Open the letter from your person"><span class="flap"></span><span class="seal">♥</span></button>
+    <p class="title">A letter from your person.</p>
+    <p class="tiny">Tap the envelope to open it</p>`;
+  $('#env', el).onclick = () => {
+    el.innerHTML = `
+      <article class="paper rise"></article>
+      <button type="button" class="btn" id="toFinale">ON TO THE FINALE</button>`;
+    const paper = $('.paper', el);
+    const add = (cls, text) => { const p = document.createElement('p'); if (cls) p.className = cls; p.textContent = text; paper.appendChild(p); return p; };
+    add('greet', LETTER.greeting);
+    LETTER.paragraphs.forEach(t => add('', t));
+    const s = add('signoff', LETTER.signoff + ' ');
+    s.appendChild(document.createElement('br'));
+    const sp = document.createElement('span'); sp.textContent = LETTER.signature; s.appendChild(sp);
+    $('#toFinale', el).onclick = next;
+  };
+}
+
+function finale(el) {
+  const COLORS = ['#ff8fc7', '#c58cff', '#ffe28a', '#8fd3ff', '#ffffff'];
+  el.innerHTML = `
+    <h2 class="display">Happy Birthday, Minsa!</h2>
+    <div class="cakewrap" id="cakewrap">
+      <svg class="cake" viewBox="0 0 260 250" role="img" aria-label="A birthday cake with three unlit candles">
+        <ellipse cx="130" cy="228" rx="118" ry="14" fill="#2a1458"/>
+        <rect x="30" y="150" width="200" height="74" rx="14" fill="#8f5cff"/>
+        <rect x="62" y="98" width="136" height="62" rx="12" fill="#ff8fc7"/>
+        <path d="M62 112c14 14 24-2 38 8s24-8 38 4 24-10 38 2 14-6 22-4v-26H62z" fill="#fff0fa"/>
+        <path d="M30 164c14 16 26-2 42 8s28-10 44 4 28-12 44 2 28-10 44 4 20-4 24-2v-22H30z" fill="#ffd6ee"/>
+        ${[100, 130, 160].map(x => `<g><rect x="${x - 5}" y="62" width="10" height="40" rx="3" fill="#ffe28a"/><path class="flame" d="M${x} 40c9 10 9 18 0 24-9-6-9-14 0-24z" fill="#ffb347"/></g>`).join('')}
+      </svg>
+      <div class="burst" id="burst" aria-hidden="true"></div>
+    </div>
+    <button type="button" class="btn" id="wish">MAKE A WISH</button>
+    <div class="pop hidden" id="after">
+      <p class="sent">WISH SENT TO THE UNIVERSE</p>
+      <p class="lede"></p>
+      <button type="button" class="btn ghost" id="replay">Replay the universe</button>
+    </div>`;
+  $('.lede', el).textContent = FINAL_WISH;
+  $('#wish', el).onclick = () => {
+    $('#cakewrap', el).classList.add('lit');
+    $('.cake', el).setAttribute('aria-label', 'A birthday cake with three lit candles');
+    const burst = $('#burst', el);
+    for (let k = 0; k < 44; k++) {
+      const b = document.createElement('i');
+      b.className = k % 3 === 0 ? 'bit round' : 'bit';
+      b.style.cssText = `--x:${Math.round((Math.random() - .5) * 340)}px;--y:${-Math.round(80 + Math.random() * 220)}px;--r:${Math.round(Math.random() * 720)}deg;background:${COLORS[k % 5]};animation-delay:${(Math.random() * .25).toFixed(2)}s`;
+      burst.appendChild(b);
+    }
+    $('#wish', el).classList.add('hidden');
+    $('#after', el).classList.remove('hidden');
+  };
+  $('#replay', el).onclick = () => go(0);
+}
+
+go(0);
+</script>
+</body>
+</html>
